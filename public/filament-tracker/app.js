@@ -38,6 +38,14 @@ function initDB() {
           appLogoEmoji: '🎨'
         };
       }
+      if (!state.githubSettings) {
+        state.githubSettings = {
+          token: '',
+          repo: '',
+          branch: 'main',
+          path: 'public/filament-tracker/db-backup.json'
+        };
+      }
     } catch (e) {
       console.error('Failed to parse localStorage, resetting to samples.', e);
       loadSampleData();
@@ -61,6 +69,12 @@ function loadSampleData() {
     appSubtitle: 'Filament Manager',
     appLogoEmoji: '🎨'
   };
+  state.githubSettings = {
+    token: '',
+    repo: '',
+    branch: 'main',
+    path: 'public/filament-tracker/db-backup.json'
+  };
   saveState();
   showNotification('Sample data loaded successfully!');
   updateUI();
@@ -79,9 +93,158 @@ function clearDatabase() {
     appSubtitle: 'Filament Manager',
     appLogoEmoji: '🎨'
   };
+  state.githubSettings = {
+    token: '',
+    repo: '',
+    branch: 'main',
+    path: 'public/filament-tracker/db-backup.json'
+  };
   saveState();
   showNotification('Database cleared. Default user created.', 'error');
   updateUI();
+}
+
+function populateGitHubSettings() {
+  if (!state.githubSettings) {
+    state.githubSettings = {
+      token: '',
+      repo: '',
+      branch: 'main',
+      path: 'public/filament-tracker/db-backup.json'
+    };
+  }
+
+  const tokenInput = document.getElementById('settings-github-token');
+  const repoInput = document.getElementById('settings-github-repo');
+  const branchInput = document.getElementById('settings-github-branch');
+  const pathInput = document.getElementById('settings-github-path');
+
+  if (tokenInput && !tokenInput.value) tokenInput.value = state.githubSettings.token || '';
+  if (repoInput && !repoInput.value) repoInput.value = state.githubSettings.repo || '';
+  if (branchInput && !branchInput.value) branchInput.value = state.githubSettings.branch || 'main';
+  if (pathInput && !pathInput.value) pathInput.value = state.githubSettings.path || 'public/filament-tracker/db-backup.json';
+}
+
+async function pullFromGitHub() {
+  const settings = state.githubSettings;
+  if (!settings || !settings.token || !settings.repo) {
+    alert('Please enter and save your GitHub Personal Access Token and Repository name first.');
+    return;
+  }
+
+  const { token, repo, branch, path } = settings;
+  const url = `https://api.github.com/repos/${repo}/contents/${path}?ref=${branch}`;
+
+  showNotification('Fetching backup from GitHub...', 'info');
+
+  try {
+    const res = await fetch(url, {
+      headers: {
+        'Authorization': `token ${token}`,
+        'Accept': 'application/vnd.github.v3+json'
+      }
+    });
+
+    if (res.status === 404) {
+      alert(`Backup file not found at path "${path}" in branch "${branch}". Check that the path is correct or push your database first to create it.`);
+      return;
+    }
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.message || 'Unknown API error');
+    }
+
+    const data = await res.json();
+    const decodedContent = atob(data.content.replace(/\s/g, ''));
+    
+    // Safely parse UTF-8 characters from base64
+    const utf8Decoder = new TextDecoder('utf-8');
+    const bytes = new Uint8Array(decodedContent.split('').map(c => c.charCodeAt(0)));
+    const parsedState = JSON.parse(utf8Decoder.decode(bytes));
+
+    if (parsedState.filaments && Array.isArray(parsedState.filaments) &&
+        parsedState.logs && Array.isArray(parsedState.logs) &&
+        parsedState.users && Array.isArray(parsedState.users)) {
+      
+      // Preserve local github settings so the user doesn't lose credentials
+      parsedState.githubSettings = settings;
+      state = parsedState;
+      saveState();
+      showNotification('Database successfully synced/pulled from GitHub!');
+      populateMaterialFilter();
+      updateUI();
+    } else {
+      alert('Downloaded file format is invalid (missing filaments/logs/users).');
+    }
+  } catch (err) {
+    console.error(err);
+    alert('Failed to pull from GitHub: ' + err.message);
+  }
+}
+
+async function pushToGitHub() {
+  const settings = state.githubSettings;
+  if (!settings || !settings.token || !settings.repo) {
+    alert('Please enter and save your GitHub Personal Access Token and Repository name first.');
+    return;
+  }
+
+  const { token, repo, branch, path } = settings;
+  const url = `https://api.github.com/repos/${repo}/contents/${path}`;
+
+  showNotification('Saving backup to GitHub...', 'info');
+
+  try {
+    // 1. Fetch current file to get the SHA (if it exists) to prevent conflict
+    let sha = null;
+    const getRes = await fetch(`${url}?ref=${branch}`, {
+      headers: {
+        'Authorization': `token ${token}`,
+        'Accept': 'application/vnd.github.v3+json'
+      }
+    });
+
+    if (getRes.ok) {
+      const getData = await getRes.json();
+      sha = getData.sha;
+    }
+
+    // 2. Prepare payload
+    const contentString = JSON.stringify(state, null, 2);
+    const utf8Bytes = new TextEncoder().encode(contentString);
+    const base64Content = btoa(String.fromCharCode(...utf8Bytes));
+
+    const body = {
+      message: 'Update SpoolControl 3D Printer database backup [sync]',
+      content: base64Content,
+      branch: branch
+    };
+    if (sha) {
+      body.sha = sha;
+    }
+
+    // 3. PUT content to repo
+    const putRes = await fetch(url, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `token ${token}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/vnd.github.v3+json'
+      },
+      body: JSON.stringify(body)
+    });
+
+    if (!putRes.ok) {
+      const err = await putRes.json();
+      throw new Error(err.message || 'Failed to update file');
+    }
+
+    showNotification('Backup successfully committed/pushed to GitHub!');
+  } catch (err) {
+    console.error(err);
+    alert('Failed to push to GitHub: ' + err.message);
+  }
 }
 
 function applyBranding() {
@@ -164,6 +327,7 @@ function closeModal(modalId) {
 // ==========================================================================
 function updateUI() {
   applyBranding();
+  populateGitHubSettings();
   renderActiveUserSelectors();
   renderDashboardStats();
   renderCharts();
@@ -1449,6 +1613,36 @@ document.addEventListener('DOMContentLoaded', () => {
     saveState();
     showNotification('App branding updated successfully!');
     applyBranding();
+  });
+
+  // Save GitHub Sync settings trigger
+  document.getElementById('btn-save-github-settings').addEventListener('click', () => {
+    const tokenInput = document.getElementById('settings-github-token');
+    const repoInput = document.getElementById('settings-github-repo');
+    const branchInput = document.getElementById('settings-github-branch');
+    const pathInput = document.getElementById('settings-github-path');
+
+    state.githubSettings = {
+      token: tokenInput.value.trim(),
+      repo: repoInput.value.trim(),
+      branch: branchInput.value.trim() || 'main',
+      path: pathInput.value.trim() || 'public/filament-tracker/db-backup.json'
+    };
+
+    saveState();
+    showNotification('GitHub synchronization settings saved!');
+  });
+
+  // GitHub Pull trigger
+  document.getElementById('btn-github-pull').addEventListener('click', () => {
+    if (confirm('Pulling database from GitHub will overwrite your current browser state. Proceed?')) {
+      pullFromGitHub();
+    }
+  });
+
+  // GitHub Push trigger
+  document.getElementById('btn-github-push').addEventListener('click', () => {
+    pushToGitHub();
   });
 
   // Auto-open native date & time pickers on click

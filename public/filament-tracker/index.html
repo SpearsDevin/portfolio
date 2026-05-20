@@ -435,6 +435,46 @@
             </div>
 
             <div class="card settings-card">
+              <h3>GitHub Cloud Sync</h3>
+              <p>Directly sync your database backup file to and from your GitHub repository using a GitHub Personal Access Token (PAT). Token is saved only in your local browser.</p>
+              
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="settings-github-token">GitHub Personal Access Token (PAT)</label>
+                  <input type="password" id="settings-github-token" class="form-control" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+                </div>
+                <div class="form-group">
+                  <label for="settings-github-repo">Repository (username/repo)</label>
+                  <input type="text" id="settings-github-repo" class="form-control" placeholder="username/repo">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="settings-github-branch">Branch</label>
+                  <input type="text" id="settings-github-branch" class="form-control" placeholder="main">
+                </div>
+                <div class="form-group">
+                  <label for="settings-github-path">File Path in Repository</label>
+                  <input type="text" id="settings-github-path" class="form-control" placeholder="public/filament-tracker/db-backup.json">
+                </div>
+              </div>
+              
+              <div class="settings-actions" style="margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap;">
+                <button class="btn btn-primary" id="btn-save-github-settings">
+                  Save Sync Settings
+                </button>
+                <button class="btn btn-outline" id="btn-github-pull">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px; margin-right: 6px; display: inline-block; vertical-align: middle;"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                  Pull from GitHub
+                </button>
+                <button class="btn btn-outline" id="btn-github-push">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px; margin-right: 6px; display: inline-block; vertical-align: middle;"><polyline points="23 20 23 14 17 14"/><path d="M20.49 9a9 9 0 1 0-2.13 9.36L23 14"/></svg>
+                  Push to GitHub
+                </button>
+              </div>
+            </div>
+
+            <div class="card settings-card">
               <h3>Backup & Restore</h3>
               <p>Keep your data safe by exporting it to a file. You can restore your backup at any time or move your database to another device.</p>
               
