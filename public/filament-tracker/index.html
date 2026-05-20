@@ -620,11 +620,20 @@
 
           <div class="form-row">
             <div class="form-group">
-              <label for="form-cost">Cost / Price Paid</label>
+              <label for="form-cost">Cost Per Spool</label>
               <div class="input-unit">
                 <span class="unit-prefix">$</span>
                 <input type="number" id="form-cost" class="form-control" placeholder="0.00" step="0.01" min="0">
               </div>
+              <small class="form-helper" id="form-cost-helper" style="display:none;"></small>
+            </div>
+            <div class="form-group" id="form-bulk-price-group">
+              <label for="form-bulk-total-price">Bulk Order Total Price</label>
+              <div class="input-unit">
+                <span class="unit-prefix">$</span>
+                <input type="number" id="form-bulk-total-price" class="form-control" placeholder="e.g. 89.99" step="0.01" min="0">
+              </div>
+              <small class="form-helper">Auto-divides by quantity → fills Cost Per Spool</small>
             </div>
             <div class="form-group">
               <label for="form-purchase-date">Purchase Date</label>

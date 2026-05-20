@@ -1039,9 +1039,11 @@ function populateFilamentForm(filament) {
   document.getElementById('form-notes').value = filament.notes || '';
   document.getElementById('form-filament-submit-btn').textContent = 'Save Changes';
   
-  // Hide delete button and quantity row during edit
+  // Hide delete button, quantity row, and bulk price group during edit
   document.getElementById('form-filament-delete-btn').style.display = 'inline-block';
   document.getElementById('form-filament-qty-row').style.display = 'none';
+  document.getElementById('form-bulk-price-group').style.display = 'none';
+  document.getElementById('form-cost-helper').style.display = 'none';
 }
 
 function resetFilamentForm() {
@@ -1058,10 +1060,14 @@ function resetFilamentForm() {
   document.getElementById('form-status').value = 'In Use';
   document.getElementById('form-filament-submit-btn').textContent = 'Save Filament';
   
-  // Hide delete button and show quantity row for add new
+  // Hide delete button and show quantity row + bulk price group for add new
   document.getElementById('form-filament-delete-btn').style.display = 'none';
   document.getElementById('form-filament-qty-row').style.display = 'block';
   document.getElementById('form-filament-qty').value = '1';
+  document.getElementById('form-bulk-price-group').style.display = 'block';
+  document.getElementById('form-bulk-total-price').value = '';
+  document.getElementById('form-cost-helper').style.display = 'none';
+  document.getElementById('form-cost-helper').textContent = '';
 }
 
 function resetPrintForm() {
@@ -1230,6 +1236,30 @@ document.addEventListener('DOMContentLoaded', () => {
       hexTextInput.value = hexInput.value;
     }
   });
+
+  // 5b. Bulk price auto-divider: recalculates per-spool cost when bulk total or qty changes
+  function recalcBulkPrice() {
+    const bulkInput = document.getElementById('form-bulk-total-price');
+    const costInput = document.getElementById('form-cost');
+    const qtyInput = document.getElementById('form-filament-qty');
+    const helper = document.getElementById('form-cost-helper');
+    
+    const bulkTotal = parseFloat(bulkInput.value);
+    const qty = Math.max(1, parseInt(qtyInput.value) || 1);
+    
+    if (bulkInput.value && !isNaN(bulkTotal) && bulkTotal > 0) {
+      const perSpool = (bulkTotal / qty).toFixed(2);
+      costInput.value = perSpool;
+      helper.textContent = `$${bulkTotal.toFixed(2)} ÷ ${qty} spool${qty > 1 ? 's' : ''} = $${perSpool} each`;
+      helper.style.display = 'block';
+    } else {
+      helper.style.display = 'none';
+      helper.textContent = '';
+    }
+  }
+
+  document.getElementById('form-bulk-total-price').addEventListener('input', recalcBulkPrice);
+  document.getElementById('form-filament-qty').addEventListener('input', recalcBulkPrice);
 
   // Helper remaining stock check when selecting filament on log print
   const printFilSelect = document.getElementById('form-print-filament');
