@@ -210,8 +210,12 @@ async function pushToGitHub() {
       sha = getData.sha;
     }
 
-    // 2. Prepare payload
-    const contentString = JSON.stringify(state, null, 2);
+    // 2. Prepare payload — strip token from backup so GitHub secret scanning doesn't block it
+    const safeState = JSON.parse(JSON.stringify(state));
+    if (safeState.githubSettings) {
+      safeState.githubSettings.token = ''; // Never store PAT in the repo
+    }
+    const contentString = JSON.stringify(safeState, null, 2);
     const utf8Bytes = new TextEncoder().encode(contentString);
     const base64Content = btoa(String.fromCharCode(...utf8Bytes));
 
