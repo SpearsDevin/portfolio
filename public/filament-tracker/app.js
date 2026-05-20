@@ -31,6 +31,13 @@ function initDB() {
       state = JSON.parse(localData);
       // Backwards compatibility check
       if (!state.activeOwner) state.activeOwner = 'all';
+      if (!state.settings) {
+        state.settings = {
+          appName: 'SpoolControl',
+          appSubtitle: 'Filament Manager',
+          appLogoEmoji: '🎨'
+        };
+      }
     } catch (e) {
       console.error('Failed to parse localStorage, resetting to samples.', e);
       loadSampleData();
@@ -49,6 +56,11 @@ function loadSampleData() {
   state.filaments = [...SAMPLE_FILAMENTS];
   state.logs = [...SAMPLE_LOGS];
   state.activeOwner = 'all';
+  state.settings = {
+    appName: 'SpoolControl',
+    appSubtitle: 'Filament Manager',
+    appLogoEmoji: '🎨'
+  };
   saveState();
   showNotification('Sample data loaded successfully!');
   updateUI();
@@ -62,9 +74,57 @@ function clearDatabase() {
   state.filaments = [];
   state.logs = [];
   state.activeOwner = 'all';
+  state.settings = {
+    appName: 'SpoolControl',
+    appSubtitle: 'Filament Manager',
+    appLogoEmoji: '🎨'
+  };
   saveState();
   showNotification('Database cleared. Default user created.', 'error');
   updateUI();
+}
+
+function applyBranding() {
+  if (!state.settings) {
+    state.settings = {
+      appName: 'SpoolControl',
+      appSubtitle: 'Filament Manager',
+      appLogoEmoji: '🎨'
+    };
+  }
+  
+  const titleDisplay = document.getElementById('app-title-display');
+  const subtitleDisplay = document.getElementById('app-subtitle-display');
+  const logoContainer = document.getElementById('app-logo-container');
+  
+  if (titleDisplay) titleDisplay.textContent = state.settings.appName || 'SpoolControl';
+  if (subtitleDisplay) subtitleDisplay.textContent = state.settings.appSubtitle || 'Filament Manager';
+  
+  if (logoContainer) {
+    // If emoji is "SVG" or empty, show default logo SVG
+    const emoji = (state.settings.appLogoEmoji || '').trim().toUpperCase();
+    if (emoji === 'SVG' || !state.settings.appLogoEmoji) {
+      logoContainer.innerHTML = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+        </svg>
+      `;
+    } else {
+      logoContainer.innerHTML = `<span style="font-size: 22px; line-height: 1; display: flex; align-items: center; justify-content: center;">${state.settings.appLogoEmoji}</span>`;
+    }
+  }
+
+  // Populate inputs under Customization tab if empty
+  const appNameInput = document.getElementById('settings-app-name');
+  const appSubInput = document.getElementById('settings-app-subtitle');
+  const appLogoInput = document.getElementById('settings-app-logo');
+  
+  if (appNameInput && !appNameInput.value) appNameInput.value = state.settings.appName || 'SpoolControl';
+  if (appSubInput && !appSubInput.value) appSubInput.value = state.settings.appSubtitle || 'Filament Manager';
+  if (appLogoInput && !appLogoInput.value) appLogoInput.value = state.settings.appLogoEmoji || '🎨';
+
+  // Dynamically set page title
+  document.title = `${state.settings.appName || 'SpoolControl'} - 3D Printer Filament Tracker`;
 }
 
 // ==========================================================================
@@ -103,6 +163,7 @@ function closeModal(modalId) {
 // UI Rendering Operations
 // ==========================================================================
 function updateUI() {
+  applyBranding();
   renderActiveUserSelectors();
   renderDashboardStats();
   renderCharts();
@@ -1349,5 +1410,22 @@ document.addEventListener('DOMContentLoaded', () => {
     if (confirm('This will overwrite current inventory and logs with fresh sample data. Continue?')) {
       loadSampleData();
     }
+  });
+
+  // Save branding changes trigger
+  document.getElementById('btn-save-branding').addEventListener('click', () => {
+    const appNameInput = document.getElementById('settings-app-name');
+    const appSubInput = document.getElementById('settings-app-subtitle');
+    const appLogoInput = document.getElementById('settings-app-logo');
+    
+    state.settings = {
+      appName: appNameInput.value.trim() || 'SpoolControl',
+      appSubtitle: appSubInput.value.trim() || 'Filament Manager',
+      appLogoEmoji: appLogoInput.value.trim() || '🎨'
+    };
+    
+    saveState();
+    showNotification('App branding updated successfully!');
+    applyBranding();
   });
 });

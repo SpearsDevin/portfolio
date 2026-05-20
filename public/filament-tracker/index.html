@@ -20,14 +20,14 @@
     <!-- Sidebar Navigation -->
     <aside class="app-sidebar">
       <div class="brand">
-        <div class="logo-icon">
+        <div class="logo-icon" id="app-logo-container">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
           </svg>
         </div>
         <div class="brand-text">
-          <h1>SpoolControl</h1>
-          <span>Filament Manager</span>
+          <h1 id="app-title-display">SpoolControl</h1>
+          <span id="app-subtitle-display">Filament Manager</span>
         </div>
       </div>
 
@@ -408,6 +408,32 @@
           </div>
 
           <div class="settings-layout">
+            <div class="card settings-card">
+              <h3>App Customization</h3>
+              <p>Customize the application's branding, logo, and title details. Enter "SVG" in the logo field to restore the default logo.</p>
+              
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="settings-app-name">App Name</label>
+                  <input type="text" id="settings-app-name" class="form-control" placeholder="SpoolControl">
+                </div>
+                <div class="form-group">
+                  <label for="settings-app-subtitle">Subtitle</label>
+                  <input type="text" id="settings-app-subtitle" class="form-control" placeholder="Filament Manager">
+                </div>
+                <div class="form-group" style="max-width: 120px;">
+                  <label for="settings-app-logo">Logo (Emoji)</label>
+                  <input type="text" id="settings-app-logo" class="form-control" placeholder="🎨" maxlength="5">
+                </div>
+              </div>
+              
+              <div class="settings-actions" style="margin-top: 14px;">
+                <button class="btn btn-primary" id="btn-save-branding">
+                  Save Branding Changes
+                </button>
+              </div>
+            </div>
+
             <div class="card settings-card">
               <h3>Backup & Restore</h3>
               <p>Keep your data safe by exporting it to a file. You can restore your backup at any time or move your database to another device.</p>

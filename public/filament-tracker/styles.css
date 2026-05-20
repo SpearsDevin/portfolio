@@ -1195,6 +1195,14 @@ textarea.form-control {
   overflow: hidden;
 }
 
+.modal-container form {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  overflow: hidden;
+  height: 100%;
+}
+
 .modal-overlay.open .modal-container {
   transform: translateY(0);
 }
