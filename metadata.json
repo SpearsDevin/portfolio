@@ -1,0 +1,6 @@
+{
+  "name": "Devin Spears Portfolio",
+  "description": "A highly polished, interactive portfolio and GitHub dashboard for Devin Spears (@SpearsDevin) featuring dynamic repository statistics, custom theme switching, and an interactive developer CLI terminal, built to run seamlessly on GitHub Pages.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
