@@ -871,8 +871,9 @@ function populateFilamentForm(filament) {
   document.getElementById('form-notes').value = filament.notes || '';
   document.getElementById('form-filament-submit-btn').textContent = 'Save Changes';
   
-  // Show delete button during edit
+  // Hide delete button and quantity row during edit
   document.getElementById('form-filament-delete-btn').style.display = 'inline-block';
+  document.getElementById('form-filament-qty-row').style.display = 'none';
 }
 
 function resetFilamentForm() {
@@ -889,8 +890,10 @@ function resetFilamentForm() {
   document.getElementById('form-status').value = 'In Use';
   document.getElementById('form-filament-submit-btn').textContent = 'Save Filament';
   
-  // Hide delete button for add new
+  // Hide delete button and show quantity row for add new
   document.getElementById('form-filament-delete-btn').style.display = 'none';
+  document.getElementById('form-filament-qty-row').style.display = 'block';
+  document.getElementById('form-filament-qty').value = '1';
 }
 
 function resetPrintForm() {
@@ -1114,14 +1117,33 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     } else {
       // Add mode
-      const newFil = {
-        id: generateId('f'),
-        brand, material, colorName, colorHex, diameter, ownerId,
-        spoolWeight, emptySpoolWeight, currentWeight, status, cost,
-        purchaseDate, location, notes
-      };
-      state.filaments.push(newFil);
-      showNotification('New filament spool added.');
+      const qtyInput = document.getElementById('form-filament-qty');
+      const qty = qtyInput ? Math.max(1, parseInt(qtyInput.value) || 1) : 1;
+      
+      for (let i = 0; i < qty; i++) {
+        let spoolLocation = location;
+        if (qty > 1) {
+          if (location) {
+            spoolLocation = `${location} (#${i + 1})`;
+          } else {
+            spoolLocation = `Copy #${i + 1}`;
+          }
+        }
+        
+        const newFil = {
+          id: generateId('f'),
+          brand, material, colorName, colorHex, diameter, ownerId,
+          spoolWeight, emptySpoolWeight, currentWeight, status, cost,
+          purchaseDate, location: spoolLocation, notes
+        };
+        state.filaments.push(newFil);
+      }
+      
+      if (qty > 1) {
+        showNotification(`Bulk added ${qty} identical filament spools.`);
+      } else {
+        showNotification('New filament spool added.');
+      }
     }
 
     saveState();
@@ -1427,5 +1449,16 @@ document.addEventListener('DOMContentLoaded', () => {
     saveState();
     showNotification('App branding updated successfully!');
     applyBranding();
+  });
+
+  // Auto-open native date & time pickers on click
+  document.querySelectorAll('input[type="date"], input[type="datetime-local"]').forEach(input => {
+    input.addEventListener('click', (e) => {
+      try {
+        e.target.showPicker();
+      } catch (err) {
+        console.log('showPicker not supported', err);
+      }
+    });
   });
 });
