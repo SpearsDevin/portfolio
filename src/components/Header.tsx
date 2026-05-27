@@ -128,7 +128,7 @@ export default function Header({ profile, activeTheme, setTheme, isLoading }: He
                 </div>
                 <div className="flex items-center gap-1">
                   <Calendar className="w-3 h-3 text-blue-400" />
-                  <span>Bio: "{profile.bio}" </span>
+                  <span>Bio: 22y/o </span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
